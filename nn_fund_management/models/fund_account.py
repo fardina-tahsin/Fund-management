@@ -64,19 +64,38 @@ class FundAccount(models.Model):
         ('name_unique', 'unique(name)', 'Account Name must be unique!'),
         ('code_unique', 'unique(code)', 'Account Code must be unique!'),
     ]
+    
+    @api.depends(
+    'incoming_fund_ids.amount',
+    'incoming_fund_ids.state',
+    )
 
-    @api.depends('incoming_fund_ids.amount', 'incoming_fund_ids.state')
     def _compute_balances(self):
         for account in self:
-            approved_funds = account.incoming_fund_ids.filtered(
+            # Total confirmed incoming funds
+            confirmed = account.incoming_fund_ids.filtered(
                 lambda f: f.state == 'confirmed'
             )
+            total_received = sum(confirmed.mapped('amount'))
 
-            total_received = sum(approved_funds.mapped('amount'))
+            # Allocations on hold (submitted or gm_approved)
+            allocations_on_hold = self.env['fund.allocation'].search([
+                ('fund_account_id', '=', account.id),
+                ('state', 'in', ('submitted', 'gm_approved')),
+            ])
+            on_hold = sum(allocations_on_hold.mapped('amount'))
+
+            # Approved allocations (assigned to projects/expense heads)
+            allocations_approved = self.env['fund.allocation'].search([
+                ('fund_account_id', '=', account.id),
+                ('state', '=', 'approved'),
+            ])
+            assigned = sum(allocations_approved.mapped('amount'))
+
             account.total_received = total_received
-            account.unassigned_balance = total_received
-            account.on_hold_balance = 0.0
-            account.assigned_balance = 0.0
+            account.on_hold_balance = on_hold
+            account.assigned_balance = assigned
+            account.unassigned_balance = total_received - on_hold - assigned
 
 
 class IncomingFund(models.Model):
@@ -118,6 +137,7 @@ class IncomingFund(models.Model):
     description = fields.Text(string='Description')
     attachment = fields.Binary(string='Attachment')
     attachment_name = fields.Char(string='Attachment Name')
+    
     company_id = fields.Many2one(
         'res.company', string='Company',
         required=True, default=lambda self: self.env.company

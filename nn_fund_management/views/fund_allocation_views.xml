@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_fund_allocation_form" model="ir.ui.view">
+        <field name="name">fund.allocation.form</field>
+        <field name="model">fund.allocation</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <button name="action_submit" string="Submit"
+                            type="object" class="btn-primary"
+                            invisible="state != 'draft'"/>
+                    <button name="action_gm_approve" string="GM Approve"
+                            type="object" class="btn-primary"
+                            invisible="state != 'submitted'"/>
+                    <button name="action_md_approve" string="MD Approve"
+                            type="object" class="btn-primary"
+                            invisible="state != 'gm_approved'"/>
+                    <button name="action_reject" string="Reject"
+                            type="object"
+                            invisible="state not in ('submitted', 'gm_approved')"/>
+                    <button name="action_cancel" string="Cancel"
+                            type="object"
+                            invisible="state not in ('draft', 'submitted', 'gm_approved')"/>
+                    <button name="action_reset_draft" string="Reset to Draft"
+                            type="object"
+                            invisible="state not in ('rejected', 'cancelled')"/>
+                    <field name="state" widget="statusbar"
+                           statusbar_visible="draft,submitted,gm_approved,approved"/>
+                </header>
+                <sheet>
+                    <group>
+                        <group string="Request Info">
+                            <field name="name" readonly="1"/>
+                            <field name="fund_account_id"/>
+                            <field name="request_date"/>
+                            <field name="requested_by"/>
+                            <field name="company_id"/>
+                        </group>
+                        <group string="Allocation Target">
+                            <field name="project_id"/>
+                            <field name="expense_head_id"/>
+                            <field name="currency_id" invisible="1"/>
+                            <field name="amount"/>
+                        </group>
+                    </group>
+                    <group string="Purpose">
+                        <field name="purpose" nolabel="1"/>
+                    </group>
+                    <group string="Attachment">
+                        <field name="attachment" filename="attachment_name"/>
+                        <field name="attachment_name" invisible="1"/>
+                    </group>
+                    <notebook>
+                        <page string="Approval History">
+                            <field name="approval_history_ids" readonly="1">
+                                <tree>
+                                    <field name="date"/>
+                                    <field name="user_id"/>
+                                    <field name="action"/>
+                                    <field name="comment"/>
+                                </tree>
+                            </field>
+                        </page>
+                        <page string="GM Approval"
+                              invisible="state not in ('gm_approved','approved','rejected')">
+                            <group>
+                                <field name="gm_approver_id" readonly="1"/>
+                                <field name="gm_approval_date" readonly="1"/>
+                                <field name="gm_comment"/>
+                            </group>
+                        </page>
+                        <page string="MD Approval"
+                              invisible="state != 'approved'">
+                            <group>
+                                <field name="md_approver_id" readonly="1"/>
+                                <field name="md_approval_date" readonly="1"/>
+                                <field name="md_comment"/>
+                            </group>
+                        </page>
+                    </notebook>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_fund_allocation_list" model="ir.ui.view">
+        <field name="name">fund.allocation.list</field>
+        <field name="model">fund.allocation</field>
+        <field name="arch" type="xml">
+            <tree>
+                <field name="name"/>
+                <field name="fund_account_id"/>
+                <field name="project_id"/>
+                <field name="expense_head_id"/>
+                <field name="amount"/>
+                <field name="request_date"/>
+                <field name="requested_by"/>
+                <field name="state"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="action_fund_allocation" model="ir.actions.act_window">
+        <field name="name">Fund Allocations</field>
+        <field name="res_model">fund.allocation</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+
+    <menuitem id="menu_fund_allocation"
+              name="Fund Allocations"
+              parent="menu_fund_management_root"
+              action="action_fund_allocation"
+              sequence="30"/>
+
+</odoo>

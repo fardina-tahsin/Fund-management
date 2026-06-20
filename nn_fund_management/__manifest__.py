@@ -11,6 +11,7 @@
         'data/ir_sequence_data.xml',
         'views/fund_account_views.xml',
         'views/project_expense_views.xml',
+        'views/fund_allocation_views.xml',
     ],
 
     'installable': True,
