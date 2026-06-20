@@ -1,0 +1,135 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Fund Project Form -->
+    <record id="view_fund_project_form" model="ir.ui.view">
+        <field name="name">fund.project.form</field>
+        <field name="model">fund.project</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <group>
+                        <group string="Project Info">
+                            <field name="name"/>
+                            <field name="code"/>
+                            <field name="company_id"/>
+                            <field name="active"/>
+                        </group>
+                        <group string="Balances">
+                            <field name="total_allocated"/>
+                            <field name="available_balance"/>
+                            <field name="requisition_hold"/>
+                            <field name="transfer_hold"/>
+                            <field name="total_spent"/>
+                            <field name="incoming_transfers"/>
+                            <field name="outgoing_transfers"/>
+                        </group>
+                    </group>
+                    <group string="Description">
+                        <field name="description" nolabel="1"/>
+                    </group>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <!-- Fund Project List -->
+    <record id="view_fund_project_list" model="ir.ui.view">
+        <field name="name">fund.project.list</field>
+        <field name="model">fund.project</field>
+        <field name="arch" type="xml">
+            <tree>
+                <field name="name"/>
+                <field name="code"/>
+                <field name="total_allocated"/>
+                <field name="available_balance"/>
+                <field name="requisition_hold"/>
+                <field name="transfer_hold"/>
+                <field name="total_spent"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- Expense Head Form -->
+    <record id="view_fund_expense_head_form" model="ir.ui.view">
+        <field name="name">fund.expense.head.form</field>
+        <field name="model">fund.expense.head</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <group>
+                        <group string="Expense Head Info">
+                            <field name="name"/>
+                            <field name="code"/>
+                            <field name="company_id"/>
+                            <field name="active"/>
+                        </group>
+                        <group string="Balances">
+                            <field name="total_allocated"/>
+                            <field name="available_balance"/>
+                            <field name="requisition_hold"/>
+                            <field name="transfer_hold"/>
+                            <field name="total_spent"/>
+                            <field name="incoming_transfers"/>
+                            <field name="outgoing_transfers"/>
+                        </group>
+                    </group>
+                    <group string="Description">
+                        <field name="description" nolabel="1"/>
+                    </group>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <!-- Expense Head List -->
+    <record id="view_fund_expense_head_list" model="ir.ui.view">
+        <field name="name">fund.expense.head.list</field>
+        <field name="model">fund.expense.head</field>
+        <field name="arch" type="xml">
+            <tree>
+                <field name="name"/>
+                <field name="code"/>
+                <field name="total_allocated"/>
+                <field name="available_balance"/>
+                <field name="requisition_hold"/>
+                <field name="transfer_hold"/>
+                <field name="total_spent"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- Actions -->
+    <record id="action_fund_project" model="ir.actions.act_window">
+        <field name="name">Projects</field>
+        <field name="res_model">fund.project</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+
+    <record id="action_fund_expense_head" model="ir.actions.act_window">
+        <field name="name">Expense Heads</field>
+        <field name="res_model">fund.expense.head</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+
+    <!-- Menus -->
+    <menuitem id="menu_fund_configuration"
+              name="Configuration"
+              parent="menu_fund_management_root"
+              sequence="90"/>
+
+    <menuitem id="menu_fund_projects"
+              name="Projects"
+              parent="menu_fund_configuration"
+              action="action_fund_project"
+              sequence="10"/>
+
+    <menuitem id="menu_fund_expense_heads"
+              name="Expense Heads"
+              parent="menu_fund_configuration"
+              action="action_fund_expense_head"
+              sequence="20"/>
+
+</odoo>
