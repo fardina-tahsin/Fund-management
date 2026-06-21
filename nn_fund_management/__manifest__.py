@@ -5,16 +5,14 @@
     'author': "Fardina Tahsin",
     'category': 'Accounting/Fund Management',
     'depends': ['base', 'mail'],
-    
     'data': [
         'security/ir.model.access.csv',
         'data/ir_sequence_data.xml',
         'views/fund_account_views.xml',
         'views/project_expense_views.xml',
         'views/fund_allocation_views.xml',
+        'views/fund_requisition_views.xml',
     ],
-
     'installable': True,
     'application': True,
 }
-
