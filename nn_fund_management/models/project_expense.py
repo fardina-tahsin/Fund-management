@@ -85,32 +85,57 @@ class FundProject(models.Model):
             ])
             total_allocated = sum(allocations.mapped('amount'))
 
-            # Requisitions on hold (submitted or gm_approved)
+            # Requisitions on hold
             req_on_hold = self.env['fund.requisition'].search([
                 ('project_id', '=', project.id),
                 ('state', 'in', ('submitted', 'gm_approved')),
             ])
-
             requisition_hold = sum(req_on_hold.mapped('amount'))
 
-            # Approved/closed requisitions
+            # Approved requisitions
             approved_reqs = self.env['fund.requisition'].search([
                 ('project_id', '=', project.id),
                 ('state', 'in', ('approved', 'closed')),
             ])
-
             total_spent = sum(approved_reqs.mapped('billed_amount'))
             approved_unspent = sum(approved_reqs.mapped('remaining_billable'))
 
+            # Outgoing transfers on hold
+            out_hold = self.env['fund.transfer'].search([
+                ('source_project_id', '=', project.id),
+                ('state', 'in', ('submitted', 'gm_approved')),
+            ])
+            transfer_hold = sum(out_hold.mapped('amount'))
+
+            # Approved outgoing transfers
+            out_approved = self.env['fund.transfer'].search([
+                ('source_project_id', '=', project.id),
+                ('state', '=', 'approved'),
+            ])
+            outgoing = sum(out_approved.mapped('amount'))
+
+            # Approved incoming transfers
+            in_approved = self.env['fund.transfer'].search([
+                ('dest_project_id', '=', project.id),
+                ('state', '=', 'approved'),
+            ])
+            incoming = sum(in_approved.mapped('amount'))
+
             project.total_allocated = total_allocated
             project.requisition_hold = requisition_hold
-            project.transfer_hold = 0.0
+            project.transfer_hold = transfer_hold
             project.total_spent = total_spent
-            project.incoming_transfers = 0.0
-            project.outgoing_transfers = 0.0
+            project.incoming_transfers = incoming
+            project.outgoing_transfers = outgoing
             
             project.available_balance = (
-                total_allocated - requisition_hold - approved_unspent - total_spent
+                total_allocated
+                + incoming
+                - outgoing
+                - requisition_hold
+                - transfer_hold
+                - approved_unspent
+                - total_spent
             )
 
     @api.constrains(
@@ -207,7 +232,7 @@ class FundExpenseHead(models.Model):
                 ('expense_head_id', '=', head.id),
                 ('state', '=', 'approved'),
             ])
-            
+
             total_allocated = sum(allocations.mapped('amount'))
 
             req_on_hold = self.env['fund.requisition'].search([
@@ -225,15 +250,42 @@ class FundExpenseHead(models.Model):
             total_spent = sum(approved_reqs.mapped('billed_amount'))
             approved_unspent = sum(approved_reqs.mapped('remaining_billable'))
 
+            out_hold = self.env['fund.transfer'].search([
+                ('source_expense_head_id', '=', head.id),
+                ('state', 'in', ('submitted', 'gm_approved')),
+            ])
+
+            transfer_hold = sum(out_hold.mapped('amount'))
+
+            out_approved = self.env['fund.transfer'].search([
+                ('source_expense_head_id', '=', head.id),
+                ('state', '=', 'approved'),
+            ])
+
+            outgoing = sum(out_approved.mapped('amount'))
+
+            in_approved = self.env['fund.transfer'].search([
+                ('dest_expense_head_id', '=', head.id),
+                ('state', '=', 'approved'),
+            ])
+
+            incoming = sum(in_approved.mapped('amount'))
+
             head.total_allocated = total_allocated
             head.requisition_hold = requisition_hold
-            head.transfer_hold = 0.0
+            head.transfer_hold = transfer_hold
             head.total_spent = total_spent
-            head.incoming_transfers = 0.0
-            head.outgoing_transfers = 0.0
+            head.incoming_transfers = incoming
+            head.outgoing_transfers = outgoing
             
             head.available_balance = (
-                total_allocated - requisition_hold - approved_unspent - total_spent
+                total_allocated
+                + incoming
+                - outgoing
+                - requisition_hold
+                - transfer_hold
+                - approved_unspent
+                - total_spent
             )
 
     @api.constrains('available_balance')
