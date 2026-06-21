@@ -36,12 +36,14 @@ class FundRequisition(models.Model):
         currency_field='currency_id', tracking=True
     )
     purpose = fields.Text(string='Purpose', required=True)
+    
     request_date = fields.Date(
         string='Request Date',
         default=fields.Date.context_today, required=True
     )
 
     required_date = fields.Date(string='Required Date')
+    
     requested_by = fields.Many2one(
         'res.users', string='Requested By',
         default=lambda self: self.env.user, required=True
@@ -128,30 +130,40 @@ class FundRequisition(models.Model):
         for rec in self:
             if rec.state != 'draft':
                 raise UserError(_('Only draft requisitions can be submitted.'))
+            
             source = rec._get_source()
+            
             if rec.amount > source.available_balance:
                 raise ValidationError(
                     _('Insufficient balance. Available: %s, Requested: %s')
                     % (source.available_balance, rec.amount)
                 )
+            
             rec.write({'state': 'submitted'})
+            
             self.env['fund.requisition.history'].create({
                 'requisition_id': rec.id,
                 'action': 'submitted',
                 'user_id': self.env.user.id,
                 'comment': 'Requisition submitted.',
             })
+
             source._compute_balances()
 
     def action_gm_approve(self):
+        if not self.env.user.has_group('nn_fund_management.group_fund_gm'):
+            raise UserError(_('Only GM Approvers can perform this action.'))
+        
         for rec in self:
             if rec.state != 'submitted':
                 raise UserError(_('Only submitted requisitions can be GM approved.'))
+            
             rec.write({
                 'state': 'gm_approved',
                 'gm_approver_id': self.env.user.id,
                 'gm_approval_date': fields.Datetime.now(),
             })
+            
             self.env['fund.requisition.history'].create({
                 'requisition_id': rec.id,
                 'action': 'gm_approved',
@@ -160,20 +172,26 @@ class FundRequisition(models.Model):
             })
 
     def action_md_approve(self):
+        if not self.env.user.has_group('nn_fund_management.group_fund_md'):
+            raise UserError(_('Only MD Approvers can perform this action.'))
+        
         for rec in self:
             if rec.state != 'gm_approved':
                 raise UserError(_('GM must approve before MD.'))
+            
             rec.write({
                 'state': 'approved',
                 'md_approver_id': self.env.user.id,
                 'md_approval_date': fields.Datetime.now(),
-            })
+            }) 
+
             self.env['fund.requisition.history'].create({
                 'requisition_id': rec.id,
                 'action': 'approved',
                 'user_id': self.env.user.id,
                 'comment': rec.md_comment or 'Approved by MD.',
             })
+
             source = rec._get_source()
             if source:
                 source._compute_balances()
@@ -182,14 +200,18 @@ class FundRequisition(models.Model):
         for rec in self:
             if rec.state not in ('submitted', 'gm_approved'):
                 raise UserError(_('Only submitted or GM approved can be rejected.'))
+            
             rec.write({'state': 'rejected'})
+            
             self.env['fund.requisition.history'].create({
                 'requisition_id': rec.id,
                 'action': 'rejected',
                 'user_id': self.env.user.id,
                 'comment': 'Requisition rejected.',
             })
+
             source = rec._get_source()
+            
             if source:
                 source._compute_balances()
 
@@ -197,14 +219,18 @@ class FundRequisition(models.Model):
         for rec in self:
             if rec.state == 'approved' and rec.billed_amount > 0:
                 raise UserError(_('Cannot cancel a requisition with existing bills.'))
+            
             rec.write({'state': 'cancelled'})
+            
             self.env['fund.requisition.history'].create({
                 'requisition_id': rec.id,
                 'action': 'cancelled',
                 'user_id': self.env.user.id,
                 'comment': 'Requisition cancelled.',
             })
+
             source = rec._get_source()
+            
             if source:
                 source._compute_balances()
 
@@ -212,12 +238,14 @@ class FundRequisition(models.Model):
         for rec in self:
             if rec.state != 'approved':
                 raise UserError(_('Only approved requisitions can be closed.'))
+            
             rec.write({'state': 'closed'})
 
     def action_reset_draft(self):
         for rec in self:
             if rec.state not in ('rejected', 'cancelled'):
                 raise UserError(_('Only rejected or cancelled can be reset.'))
+            
             rec.write({'state': 'draft'})
 
 

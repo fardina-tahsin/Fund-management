@@ -140,6 +140,9 @@ class FundAllocation(models.Model):
             rec.fund_account_id._compute_balances()
 
     def action_gm_approve(self):
+        if not self.env.user.has_group('nn_fund_management.group_fund_gm'):
+            raise UserError(_('Only GM Approvers can perform this action.'))
+        
         for rec in self:
             if rec.state != 'submitted':
                 raise UserError(_('Only submitted allocations can be GM approved.'))
@@ -159,6 +162,9 @@ class FundAllocation(models.Model):
             })
 
     def action_md_approve(self):
+        if not self.env.user.has_group('nn_fund_management.group_fund_md'):
+            raise UserError(_('Only MD Approvers can perform this action.'))
+
         for rec in self:
             if rec.state != 'gm_approved':
                 raise UserError(_('GM must approve before MD approval.'))

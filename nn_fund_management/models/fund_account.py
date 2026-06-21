@@ -172,6 +172,9 @@ class IncomingFund(models.Model):
                 raise ValidationError(_('Amount must be greater than zero.'))
 
     def action_confirm(self):
+        if not self.env.user.has_group('nn_fund_management.group_fund_finance'):
+            raise UserError(_('Only Finance Users can confirm incoming funds.'))
+        
         for rec in self:
             if rec.state != 'draft':
                 raise ValidationError(_('Only draft records can be confirmed.'))
