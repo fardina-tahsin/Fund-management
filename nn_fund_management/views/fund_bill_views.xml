@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_fund_bill_form" model="ir.ui.view">
+        <field name="name">fund.bill.form</field>
+        <field name="model">fund.bill</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <button name="action_post" string="Post"
+                            type="object" class="btn-primary"
+                            invisible="state != 'draft'"/>
+                    <button name="action_cancel" string="Cancel"
+                            type="object"
+                            invisible="state == 'cancelled'"/>
+                    <button name="action_reset_draft" string="Reset to Draft"
+                            type="object"
+                            invisible="state != 'cancelled'"/>
+                    <field name="state" widget="statusbar"
+                           statusbar_visible="draft,posted"/>
+                </header>
+                <sheet>
+                    <group>
+                        <group string="Bill Info">
+                            <field name="name" readonly="1"/>
+                            <field name="requisition_id"/>
+                            <field name="bill_date"/>
+                            <field name="vendor"/>
+                            <field name="company_id"/>
+                        </group>
+                        <group string="Amount">
+                            <field name="currency_id" invisible="1"/>
+                            <field name="amount"/>
+                            <field name="project_id" readonly="1"/>
+                            <field name="expense_head_id" readonly="1"/>
+                        </group>
+                    </group>
+                    <group string="Description">
+                        <field name="description" nolabel="1"/>
+                    </group>
+                    <group string="Attachment">
+                        <field name="attachment" filename="attachment_name"/>
+                        <field name="attachment_name" invisible="1"/>
+                    </group>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_fund_bill_list" model="ir.ui.view">
+        <field name="name">fund.bill.list</field>
+        <field name="model">fund.bill</field>
+        <field name="arch" type="xml">
+            <tree>
+                <field name="name"/>
+                <field name="requisition_id"/>
+                <field name="project_id"/>
+                <field name="expense_head_id"/>
+                <field name="amount"/>
+                <field name="bill_date"/>
+                <field name="vendor"/>
+                <field name="state"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="action_fund_bill" model="ir.actions.act_window">
+        <field name="name">Fund Bills</field>
+        <field name="res_model">fund.bill</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+
+    <menuitem id="menu_fund_bill"
+              name="Fund Bills"
+              parent="menu_fund_management_root"
+              action="action_fund_bill"
+              sequence="50"/>
+
+</odoo>

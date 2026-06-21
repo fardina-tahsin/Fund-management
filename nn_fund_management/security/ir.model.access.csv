@@ -7,3 +7,4 @@ access_fund_allocation_user,fund.allocation.user,model_fund_allocation,,1,1,1,0
 access_fund_approval_history,fund.approval.history,model_fund_approval_history,,1,1,1,0
 access_fund_requisition_user,fund.requisition.user,model_fund_requisition,,1,1,1,0
 access_fund_requisition_history,fund.requisition.history,model_fund_requisition_history,,1,1,1,0
+access_fund_bill_user,fund.bill.user,model_fund_bill,,1,1,1,0

@@ -12,20 +12,25 @@ class FundRequisition(models.Model):
         string='Requisition Number', readonly=True,
         copy=False, default=lambda self: _('New')
     )
+
     company_id = fields.Many2one(
         'res.company', string='Company',
         default=lambda self: self.env.company, required=True
     )
+
     currency_id = fields.Many2one(
         'res.currency',
         default=lambda self: self.env.company.currency_id
     )
+
     project_id = fields.Many2one(
         'fund.project', string='Project', tracking=True
     )
+
     expense_head_id = fields.Many2one(
         'fund.expense.head', string='Expense Head', tracking=True
     )
+
     amount = fields.Monetary(
         string='Requested Amount', required=True,
         currency_field='currency_id', tracking=True
@@ -35,11 +40,13 @@ class FundRequisition(models.Model):
         string='Request Date',
         default=fields.Date.context_today, required=True
     )
+
     required_date = fields.Date(string='Required Date')
     requested_by = fields.Many2one(
         'res.users', string='Requested By',
         default=lambda self: self.env.user, required=True
     )
+
     attachment = fields.Binary(string='Supporting Attachment')
     attachment_name = fields.Char(string='Attachment Name')
 
@@ -65,6 +72,7 @@ class FundRequisition(models.Model):
         default=0.0,
         currency_field='currency_id'
     )
+
     remaining_billable = fields.Monetary(
         string='Remaining Billable Amount',
         compute='_compute_remaining',
@@ -75,6 +83,10 @@ class FundRequisition(models.Model):
     approval_history_ids = fields.One2many(
         'fund.requisition.history', 'requisition_id',
         string='Approval History'
+    )
+
+    bill_ids = fields.One2many(
+    'fund.bill', 'requisition_id', string='Bills'
     )
 
     @api.model
@@ -217,7 +229,9 @@ class FundRequisitionHistory(models.Model):
     requisition_id = fields.Many2one(
         'fund.requisition', string='Requisition', ondelete='cascade'
     )
+
     user_id = fields.Many2one('res.users', string='User', required=True)
+    
     action = fields.Selection([
         ('submitted', 'Submitted'),
         ('gm_approved', 'GM Approved'),
@@ -226,4 +240,5 @@ class FundRequisitionHistory(models.Model):
         ('cancelled', 'Cancelled'),
         ('closed', 'Closed'),
     ], string='Action', required=True)
+    
     comment = fields.Text(string='Comment')
