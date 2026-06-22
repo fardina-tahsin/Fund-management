@@ -128,6 +128,23 @@ class FundTransfer(models.Model):
             if rec.amount <= 0:
                 raise ValidationError(_('Transfer amount must be greater than zero.'))
 
+    def _log_audit(self, action, previous_state, new_state, comment=''):
+        self.env['fund.audit.log'].create({
+            'name': self.name,
+            'user_id': self.env.user.id,
+            'action': action,
+            'previous_state': previous_state,
+            'new_state': new_state,
+            'amount': self.amount,
+            'currency_id': self.currency_id.id,
+            'project_id': self.source_project_id.id if self.source_project_id else False,
+            'expense_head_id': self.source_expense_head_id.id if self.source_expense_head_id else False,
+            'comment': comment,
+            'model_name': 'Fund Transfer',
+            'record_id': self.id,
+            'record_ref': self.name,
+        })
+    
     def action_submit(self):
         for rec in self:
             if rec.state != 'draft':
@@ -142,6 +159,8 @@ class FundTransfer(models.Model):
                     _('Insufficient source balance. Available: %s, Requested: %s')
                     % (source.available_balance, rec.amount)
                 )
+            
+            rec._log_audit('Submitted', 'draft', 'submitted')
 
             rec.write({'state': 'submitted'})
 
@@ -163,6 +182,8 @@ class FundTransfer(models.Model):
             if rec.state != 'submitted':
                 raise UserError(_('Only submitted transfers can be GM approved.'))
 
+            rec._log_audit('GM Approved', 'submitted', 'gm_approved')
+
             rec.write({
                 'state': 'gm_approved',
                 'gm_approver_id': self.env.user.id,
@@ -183,6 +204,8 @@ class FundTransfer(models.Model):
         for rec in self:
             if rec.state != 'gm_approved':
                 raise UserError(_('GM must approve before MD.'))
+
+            rec._log_audit('MD Approved', 'gm_approved', 'approved')
 
             rec.write({
                 'state': 'approved',
@@ -210,6 +233,8 @@ class FundTransfer(models.Model):
             if rec.state not in ('submitted', 'gm_approved'):
                 raise UserError(_('Only submitted or GM approved transfers can be rejected.'))
 
+            rec._log_audit('Rejected', rec.state, 'rejected')
+
             rec.write({'state': 'rejected'})
 
             self.env['fund.transfer.history'].create({
@@ -229,6 +254,8 @@ class FundTransfer(models.Model):
             if rec.state == 'approved':
                 raise UserError(_('Approved transfers cannot be cancelled.'))
 
+            rec._log_audit('Cancelled', rec.state, 'cancelled')
+
             rec.write({'state': 'cancelled'})
 
             self.env['fund.transfer.history'].create({
@@ -246,7 +273,18 @@ class FundTransfer(models.Model):
         for rec in self:
             if rec.state not in ('rejected', 'cancelled'):
                 raise UserError(_('Only rejected or cancelled transfers can be reset.'))
+            
+            rec._log_audit('Reset to Draft', rec.state, 'draft')
+            
             rec.write({'state': 'draft'})
+
+    def unlink(self):
+        for rec in self:
+            if rec.state not in ('draft', 'cancelled'):
+                raise UserError(
+                    _('You cannot delete a confirmed record. Please cancel it first.')
+                )
+        return super().unlink()
 
 
 class FundTransferHistory(models.Model):

@@ -101,12 +101,40 @@ class FundBill(models.Model):
                     }
                 )
 
+    def _log_audit(self, action, previous_state, new_state, comment=''):
+        self.env['fund.audit.log'].create({
+            'name': self.name,
+            'user_id': self.env.user.id,
+            'action': action,
+            'previous_state': previous_state,
+            'new_state': new_state,
+            'amount': self.amount,
+            'currency_id': self.currency_id.id,
+            'project_id': self.project_id.id if self.project_id else False,
+            'expense_head_id': self.expense_head_id.id if self.expense_head_id else False,
+            'comment': comment,
+            'model_name': 'Fund Bill',
+            'record_id': self.id,
+            'record_ref': self.name,
+        })
+    
     def action_post(self):
         for rec in self:
             if rec.state != 'draft':
                 raise UserError(_('Only draft bills can be posted.'))
 
             req = rec.requisition_id
+
+            # Block if bill project doesn't match requisition project
+            if req.project_id and rec.project_id != req.project_id:
+                raise ValidationError(
+                    _('This bill does not match the requisition project.')
+                )
+            if req.expense_head_id and rec.expense_head_id != req.expense_head_id:
+                raise ValidationError(
+                    _('This bill does not match the requisition expense head.')
+                )
+            
             if req.state != 'approved':
                 raise UserError(_('The linked requisition must be approved.'))
 
@@ -116,6 +144,8 @@ class FundBill(models.Model):
                     _('Bill amount %(bill)s exceeds remaining billable %(remaining)s.')
                     % {'bill': rec.amount, 'remaining': req.remaining_billable}
                 )
+            
+            rec._log_audit('Posted', 'draft', 'posted')
 
             rec.write({'state': 'posted'})
 
@@ -133,6 +163,9 @@ class FundBill(models.Model):
                 raise UserError(_('Bill is already cancelled.'))
 
             was_posted = rec.state == 'posted'
+
+            rec._log_audit('Cancelled', rec.state, 'cancelled')
+
             rec.write({'state': 'cancelled'})
 
             if was_posted:
@@ -149,4 +182,15 @@ class FundBill(models.Model):
         for rec in self:
             if rec.state != 'cancelled':
                 raise UserError(_('Only cancelled bills can be reset to draft.'))
+            
+            rec._log_audit('Reset to Draft', rec.state, 'draft')
+
             rec.write({'state': 'draft'})
+
+    def unlink(self):
+        for rec in self:
+            if rec.state not in ('draft', 'cancelled'):
+                raise UserError(
+                    _('You cannot delete a confirmed record. Please cancel it first.')
+                )
+        return super().unlink()

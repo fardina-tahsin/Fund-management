@@ -126,6 +126,24 @@ class FundRequisition(models.Model):
         self.ensure_one()
         return self.project_id or self.expense_head_id
 
+    def _log_audit(self, action, previous_state, new_state, comment=''):
+        self.env['fund.audit.log'].create({
+            'name': self.name,
+            'user_id': self.env.user.id,
+            'action': action,
+            'previous_state': previous_state,
+            'new_state': new_state,
+            'amount': self.amount,
+            'currency_id': self.currency_id.id,
+            'project_id': self.project_id.id if self.project_id else False,
+            'expense_head_id': self.expense_head_id.id if self.expense_head_id else False,
+            'comment': comment,
+            'model_name': 'Fund Requisition',
+            'record_id': self.id,
+            'record_ref': self.name,
+        })
+    
+    
     def action_submit(self):
         for rec in self:
             if rec.state != 'draft':
@@ -139,6 +157,8 @@ class FundRequisition(models.Model):
                     % (source.available_balance, rec.amount)
                 )
             
+            rec._log_audit('Submitted', 'draft', 'submitted')
+
             rec.write({'state': 'submitted'})
             
             self.env['fund.requisition.history'].create({
@@ -157,7 +177,8 @@ class FundRequisition(models.Model):
         for rec in self:
             if rec.state != 'submitted':
                 raise UserError(_('Only submitted requisitions can be GM approved.'))
-            
+            rec._log_audit('GM Approved', 'submitted', 'gm_approved')
+
             rec.write({
                 'state': 'gm_approved',
                 'gm_approver_id': self.env.user.id,
@@ -178,7 +199,8 @@ class FundRequisition(models.Model):
         for rec in self:
             if rec.state != 'gm_approved':
                 raise UserError(_('GM must approve before MD.'))
-            
+            rec._log_audit('MD Approved', 'gm_approved', 'approved')
+
             rec.write({
                 'state': 'approved',
                 'md_approver_id': self.env.user.id,
@@ -201,6 +223,8 @@ class FundRequisition(models.Model):
             if rec.state not in ('submitted', 'gm_approved'):
                 raise UserError(_('Only submitted or GM approved can be rejected.'))
             
+            rec._log_audit('Rejected', rec.state, 'rejected')
+
             rec.write({'state': 'rejected'})
             
             self.env['fund.requisition.history'].create({
@@ -220,6 +244,8 @@ class FundRequisition(models.Model):
             if rec.state == 'approved' and rec.billed_amount > 0:
                 raise UserError(_('Cannot cancel a requisition with existing bills.'))
             
+            rec._log_audit('Cancelled', rec.state, 'cancelled')
+
             rec.write({'state': 'cancelled'})
             
             self.env['fund.requisition.history'].create({
@@ -239,6 +265,8 @@ class FundRequisition(models.Model):
             if rec.state != 'approved':
                 raise UserError(_('Only approved requisitions can be closed.'))
             
+            rec._log_audit('Closed', rec.state, 'closed')
+
             rec.write({'state': 'closed'})
 
     def action_reset_draft(self):
@@ -246,7 +274,17 @@ class FundRequisition(models.Model):
             if rec.state not in ('rejected', 'cancelled'):
                 raise UserError(_('Only rejected or cancelled can be reset.'))
             
+            rec._log_audit('Reset to Draft', rec.state, 'draft')
+
             rec.write({'state': 'draft'})
+
+    def unlink(self):
+        for rec in self:
+            if rec.state not in ('draft', 'cancelled'):
+                raise UserError(
+                    _('You cannot delete a confirmed record. Please cancel it first.')
+                )
+        return super().unlink()
 
 
 class FundRequisitionHistory(models.Model):

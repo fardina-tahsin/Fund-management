@@ -1,6 +1,5 @@
-from odoo import fields, models, api, _
-from odoo.exceptions import ValidationError
-
+from odoo import models, fields, api, _
+from odoo.exceptions import ValidationError, UserError
 
 class FundAccount(models.Model):
     _name = 'fund.account'
@@ -35,28 +34,28 @@ class FundAccount(models.Model):
     total_received = fields.Monetary(
         string='Total Received',
         compute='_compute_balances',
-        store=True,
+        store=False,
         currency_field='currency_id'
     )
 
     unassigned_balance = fields.Monetary(
         string='Unassigned Balance',
         compute='_compute_balances',
-        store=True,
+        store=False,
         currency_field='currency_id'
     )
 
     on_hold_balance = fields.Monetary(
         string='On Hold Balance',
         compute='_compute_balances',
-        store=True,
+        store=False,
         currency_field='currency_id'
     )
 
     assigned_balance = fields.Monetary(
         string='Assigned Balance',
         compute='_compute_balances',
-        store=True,
+        store=False,
         currency_field='currency_id'
     )
 
@@ -65,10 +64,10 @@ class FundAccount(models.Model):
         ('code_unique', 'unique(code)', 'Account Code must be unique!'),
     ]
     
-    @api.depends(
-    'incoming_fund_ids.amount',
-    'incoming_fund_ids.state',
-    )
+    # @api.depends(
+    # 'incoming_fund_ids.amount',
+    # 'incoming_fund_ids.state',
+    # )
 
     def _compute_balances(self):
         for account in self:
@@ -195,3 +194,11 @@ class IncomingFund(models.Model):
             if rec.state != 'cancelled':
                 raise ValidationError(_('Only cancelled records can be reset to draft.'))
             rec.write({'state': 'draft'})
+
+    def unlink(self):
+        for rec in self:
+            if rec.state not in ('draft', 'cancelled'):
+                raise UserError(
+                    _('You cannot delete a confirmed record. Please cancel it first.')
+                )
+        return super().unlink()
