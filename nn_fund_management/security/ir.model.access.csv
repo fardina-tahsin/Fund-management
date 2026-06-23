@@ -15,11 +15,15 @@ access_fund_expense_head_user,fund.expense.head.user,model_fund_expense_head,nn_
 access_fund_expense_head_admin,fund.expense.head.admin,model_fund_expense_head,nn_fund_management.group_fund_admin,1,1,1,1
 
 access_fund_allocation_user,fund.allocation.user,model_fund_allocation,nn_fund_management.group_fund_user,1,1,1,0
+access_fund_allocation_gm,fund.allocation.gm,model_fund_allocation,nn_fund_management.group_fund_gm,1,1,0,0
+access_fund_allocation_md,fund.allocation.md,model_fund_allocation,nn_fund_management.group_fund_md,1,1,0,0
 access_fund_allocation_admin,fund.allocation.admin,model_fund_allocation,nn_fund_management.group_fund_admin,1,1,1,1
 
 access_fund_approval_history,fund.approval.history,model_fund_approval_history,nn_fund_management.group_fund_user,1,1,1,0
 
 access_fund_requisition_user,fund.requisition.user,model_fund_requisition,nn_fund_management.group_fund_user,1,1,1,0
+access_fund_requisition_gm,fund.requisition.gm,model_fund_requisition,nn_fund_management.group_fund_gm,1,1,0,0
+access_fund_requisition_md,fund.requisition.md,model_fund_requisition,nn_fund_management.group_fund_md,1,1,0,0
 access_fund_requisition_admin,fund.requisition.admin,model_fund_requisition,nn_fund_management.group_fund_admin,1,1,1,1
 access_fund_requisition_history,fund.requisition.history,model_fund_requisition_history,nn_fund_management.group_fund_user,1,1,1,0
 
@@ -27,6 +31,8 @@ access_fund_bill_user,fund.bill.user,model_fund_bill,nn_fund_management.group_fu
 access_fund_bill_admin,fund.bill.admin,model_fund_bill,nn_fund_management.group_fund_admin,1,1,1,1
 
 access_fund_transfer_user,fund.transfer.user,model_fund_transfer,nn_fund_management.group_fund_user,1,1,1,0
+access_fund_transfer_gm,fund.transfer.gm,model_fund_transfer,nn_fund_management.group_fund_gm,1,1,0,0
+access_fund_transfer_md,fund.transfer.md,model_fund_transfer,nn_fund_management.group_fund_md,1,1,0,0
 access_fund_transfer_admin,fund.transfer.admin,model_fund_transfer,nn_fund_management.group_fund_admin,1,1,1,1
 access_fund_transfer_history,fund.transfer.history,model_fund_transfer_history,nn_fund_management.group_fund_user,1,1,1,0
 

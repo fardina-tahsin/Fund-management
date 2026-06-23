@@ -56,7 +56,7 @@
                         </group>
                     </group>
                     <group string="Reason">
-                        <field name="reason" nolabel="1"/>
+                        <field name="reason" nolabel="1" colspan="2"/>
                     </group>
                     <notebook>
                         <page string="GM Comment">

@@ -45,7 +45,7 @@
                         </group>
                     </group>
                     <group string="Purpose">
-                        <field name="purpose" nolabel="1"/>
+                        <field name="purpose" nolabel="1" colspan="2"/>
                     </group>
                     <group string="Attachment">
                         <field name="attachment" filename="attachment_name"/>
